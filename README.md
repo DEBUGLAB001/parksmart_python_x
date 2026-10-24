@@ -45,3 +45,5 @@ Issue 4: Parking History Filter Misses Boundary Records
 2. Sorting parking bays by slot number arranges them in natural numerical order (A-1, A-2, A-3 through A-12).
 3. Parking a vehicle in one slot leaves all other unoccupied spaces in that section marked as available.
 4. Filtering parking history includes all sessions that touch or overlap the chosen time range, including boundary timestamps.
+
+You can verify your fixes with the `pytest` command. Once all issues are resolved, the dashboard will accurately reflect live parking operations and all tests will pass.
