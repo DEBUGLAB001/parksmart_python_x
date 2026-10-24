@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ParkSmart — Smart Parking Management System</title>
+  <meta name="description" content="State-of-the-art urban mobility parking facility dashboard. Real-time slot allocation, occupancy tracking, and session management.">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header / Brand Navigation -->
+    <header class="app-header">
+      <div class="header-inner">
+        <div class="brand-section">
+          <div class="brand-logo">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="5"/>
+              <path d="M9 17V7h4.5a3 3 0 0 1 0 6H9"/>
+            </svg>
+          </div>
+          <div class="brand-info">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 2px;">
+              <span style="font-size: 0.62rem; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase; color: #111827;">SMART MOBILITY</span>
+              <span style="display: inline-block; width: 14px; height: 2px; background: #111827; transform: rotate(-35deg);"></span>
+            </div>
+            <h1>
+              ParkSmart
+              <span class="badge">Live Facility</span>
+            </h1>
+            <p>Smart Parking Infrastructure & Real-Time Bay Allocation</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <div class="facility-clock" title="Facility Real-Time Clock">
+            <div class="live-dot"></div>
+            <span id="facilityClock">--:--:--</span>
+          </div>
+
+          <button id="btnOpenEntry" class="btn btn-primary" title="Register an incoming vehicle">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            Park Vehicle
+          </button>
+
+          <button id="btnOpenExit" class="btn btn-secondary" title="Process vehicle departure">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+            </svg>
+            Exit Vehicle
+          </button>
+
+          <button id="btnResetDb" class="btn btn-secondary btn-icon" title="Reset facility to initial seed">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <path d="M3 3v5h5"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Occupancy Metrics Overview -->
+      <section class="metrics-grid">
+        <div class="metric-card available">
+          <div class="metric-header">
+            <span class="metric-title">Available Spaces</span>
+            <div class="metric-icon-wrap">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+          </div>
+          <div class="metric-value" id="metricAvailableSpaces">--</div>
+          <span class="metric-sub">Ready for incoming allocation</span>
+        </div>
+
+        <div class="metric-card occupied">
+          <div class="metric-header">
+            <span class="metric-title">Occupied Spaces</span>
+            <div class="metric-icon-wrap">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.04 3H5.81l1.04-3zM19 17H5v-4.66l.12-.34h13.77l.11.34V17z"/>
+              </svg>
+            </div>
+          </div>
+          <div class="metric-value" id="metricOccupiedSpaces">--</div>
+          <span class="metric-sub">Active parked vehicles</span>
+        </div>
+
+        <div class="metric-card rate">
+          <div class="metric-header">
+            <span class="metric-title">Occupancy Rate</span>
+            <div class="metric-icon-wrap">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+            </div>
+          </div>
+          <div class="metric-value" id="metricOccupancyPercentage">--%</div>
+          <div class="progress-bar-wrap">
+            <div id="occupancyProgressBar" class="progress-bar-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <div class="metric-card sessions">
+          <div class="metric-header">
+            <span class="metric-title">Total Capacity</span>
+            <div class="metric-icon-wrap">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+              </svg>
+            </div>
+          </div>
+          <div class="metric-value" id="metricTotalSpaces">--</div>
+          <span class="metric-sub"><span id="metricActiveSessions">0</span> active sessions logged</span>
+        </div>
+      </section>
+
+      <!-- View Navigation Tabs -->
+      <nav class="view-tabs">
+        <button class="tab-btn active" data-tab="mapTab">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+          </svg>
+          Visual Parking Map
+        </button>
+        <button class="tab-btn" data-tab="activeSessionsTab">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+          Active Sessions
+        </button>
+        <button class="tab-btn" data-tab="historyTab">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+          </svg>
+          Parking History
+        </button>
+      </nav>
+
+      <!-- TAB 1: Visual Parking Map -->
+      <section id="mapTab" class="tab-content active">
+        <!-- Toolbar Filters & Sorting -->
+        <div class="toolbar-container">
+          <div class="search-box">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="slotSearchInput" placeholder="Search by slot ID or license plate...">
+          </div>
+
+          <div class="filter-controls">
+            <div class="filter-group">
+              <span class="filter-label">Status:</span>
+              <select id="statusFilterSelect" class="select-control">
+                <option value="all">All Bays</option>
+                <option value="available">Available Only</option>
+                <option value="occupied">Occupied Only</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <span class="filter-label">Category:</span>
+              <select id="typeFilterSelect" class="select-control">
+                <option value="all">All Categories</option>
+                <option value="compact">Compact</option>
+                <option value="standard">Standard</option>
+                <option value="ev">EV Charging</option>
+                <option value="large">Large / SUV</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <span class="filter-label">Sort:</span>
+              <select id="sortSelect" class="select-control">
+                <option value="slot_number_asc">Slot ID (Ascending)</option>
+                <option value="slot_number_desc">Slot ID (Descending)</option>
+                <option value="slot_type">Slot Category</option>
+                <option value="status">Occupancy Status</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visual Map Grid -->
+        <div class="parking-map-section">
+          <!-- Section A -->
+          <div class="section-group">
+            <div class="section-header">
+              <div class="section-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>
+                </svg>
+                Facility Section A (Main Deck)
+              </div>
+              <span class="section-stats" id="statsSectionA">-- slots</span>
+            </div>
+            <div class="parking-grid" id="parkingGridSectionA">
+              <!-- Dynamically rendered slot tiles -->
+            </div>
+          </div>
+
+          <!-- Section B -->
+          <div class="section-group">
+            <div class="section-header">
+              <div class="section-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>
+                </svg>
+                Facility Section B (Lower Deck)
+              </div>
+              <span class="section-stats" id="statsSectionB">-- slots</span>
+            </div>
+            <div class="parking-grid" id="parkingGridSectionB">
+              <!-- Dynamically rendered slot tiles -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: Active Parking Sessions -->
+      <section id="activeSessionsTab" class="tab-content">
+        <div class="table-container">
+          <div class="table-header-bar">
+            <div class="table-title">Currently Active Parking Sessions</div>
+            <button class="btn btn-secondary" onclick="document.dispatchEvent(new Event('DOMContentLoaded'))" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">
+              Refresh
+            </button>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Session ID</th>
+                <th>Assigned Slot</th>
+                <th>License Plate</th>
+                <th>Vehicle Type</th>
+                <th>Entry Timestamp</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="activeSessionsTbody">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TAB 3: Parking History & Analytics -->
+      <section id="historyTab" class="tab-content">
+        <div class="table-container">
+          <div class="table-header-bar">
+            <div class="table-title">Historical Parking Sessions & Exits</div>
+          </div>
+
+          <!-- History Time Interval Filter Bar -->
+          <div class="history-filters">
+            <div class="date-input-group">
+              <label for="historyStartTime">Start Interval:</label>
+              <input type="datetime-local" id="historyStartTime" class="date-input" value="2026-10-24T09:00">
+            </div>
+
+            <div class="date-input-group">
+              <label for="historyEndTime">End Interval:</label>
+              <input type="datetime-local" id="historyEndTime" class="date-input" value="2026-10-24T12:00">
+            </div>
+
+            <div class="search-box" style="min-width: 200px;">
+              <input type="text" id="historySearchInput" placeholder="Filter plate or slot...">
+            </div>
+
+            <button id="btnFilterHistory" class="btn btn-primary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem;">
+              Apply Range Filter
+            </button>
+
+            <button id="btnResetHistory" class="btn btn-secondary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem;">
+              Clear Filters
+            </button>
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Session ID</th>
+                <th>Slot</th>
+                <th>License Plate</th>
+                <th>Vehicle Type</th>
+                <th>Entry Time</th>
+                <th>Exit Time</th>
+                <th>Billed Fee</th>
+              </tr>
+            </thead>
+            <tbody id="historyTbody">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <!-- Modal: Register Arriving Vehicle Entry -->
+    <div id="entryModal" class="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            Register Incoming Vehicle
+          </div>
+          <button class="close-btn" aria-label="Close modal">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <form id="vehicleEntryForm">
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="entryPlateInput">Vehicle License Plate *</label>
+              <input type="text" id="entryPlateInput" class="form-input" placeholder="e.g. CA-7890" required autofocus>
+            </div>
+
+            <div class="form-group">
+              <label for="entryTypeSelect">Vehicle Classification *</label>
+              <select id="entryTypeSelect" class="form-input select-control">
+                <option value="compact">Compact Car / Hatchback</option>
+                <option value="sedan">Standard Sedan</option>
+                <option value="suv">SUV / Pickup Truck</option>
+                <option value="ev">Electric Vehicle (EV)</option>
+                <option value="motorcycle">Motorcycle / Two-Wheeler</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="entryColorInput">Vehicle Color (Optional)</label>
+              <input type="text" id="entryColorInput" class="form-input" placeholder="e.g. Midnight Blue, Silver">
+            </div>
+
+            <div class="form-group">
+              <label for="entryDescInput">Notes / Description (Optional)</label>
+              <input type="text" id="entryDescInput" class="form-input" placeholder="e.g. Tesla Model 3, Level 2 Charging requested">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-modal-cancel">Cancel</button>
+            <button type="submit" class="btn btn-primary">Allocate & Check In</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal: Vehicle Exit & Departure -->
+    <div id="exitModal" class="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+            </svg>
+            Record Vehicle Exit
+          </div>
+          <button class="close-btn" aria-label="Close modal">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <form id="vehicleExitForm">
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="exitIdentifierInput">Slot Number, License Plate, or Session ID *</label>
+              <input type="text" id="exitIdentifierInput" class="form-input" placeholder="e.g. A-1 or NY-4421" required autofocus>
+              <span class="detail-label" style="margin-top: 0.3rem;">Releases the bay and finalizes parking fee.</span>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-modal-cancel">Cancel</button>
+            <button type="submit" class="btn btn-danger">Confirm Exit & Release</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal: Slot Details & Inspection -->
+    <div id="slotDetailModal" class="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title">
+            <span id="detailSlotNumber">--</span>
+            <span class="badge" id="detailType">--</span>
+          </div>
+          <button class="close-btn" aria-label="Close modal">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">Deck Section</span>
+              <span class="detail-val" id="detailSection">--</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Current Status</span>
+              <span class="detail-val" id="detailStatus">--</span>
+            </div>
+          </div>
+
+          <div id="detailVehicleSection" style="display: none; background: var(--bg-surface); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="detail-label">Parked Plate</span>
+                <span class="plate-pill" id="detailPlate">--</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Vehicle Type</span>
+                <span class="detail-val" id="detailVehicleType">--</span>
+              </div>
+              <div class="detail-item" style="grid-column: span 2; margin-top: 0.5rem;">
+                <span class="detail-label">Parked Since</span>
+                <span class="detail-val" id="detailEntryTime" style="font-size: 0.85rem;">--</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-modal-cancel">Close</button>
+          <button type="button" id="btnDetailPark" class="btn btn-primary" style="display: none;">Park Here</button>
+          <button type="button" id="btnDetailExit" class="btn btn-danger" style="display: none;">Release Slot</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toastContainer" class="toast-container"></div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

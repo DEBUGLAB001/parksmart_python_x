@@ -1,0 +1,25 @@
+{
+  "challenge_id": "parksmart-python",
+  "name": "ParkSmart",
+  "difficulty": "Easy",
+  "category": "DSA and algorithms only",
+  "runtime_type": "python/flask",
+  "runtime_config": {
+    "entrypoint": "app.py"
+  },
+  "install_command": "pip install -r requirements.txt",
+  "start_command": "python -m flask run --reload --host 0.0.0.0 --port 5000",
+  "test_command": "pytest",
+  "ports": [
+    {
+      "container_port": 5000,
+      "preview_type": "browser"
+    }
+  ],
+  "topics": [
+    "First-Fit Allocation Algorithm",
+    "Sorting Algorithms and Comparator Logic",
+    "Hash Maps and Key-Based Lookup",
+    "Interval Boundary Conditions and Overlap Detection"
+  ]
+}
