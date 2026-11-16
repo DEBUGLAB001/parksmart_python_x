@@ -74,13 +74,11 @@ def get_slots():
         all_slots = get_all_slots()
         active_sessions = get_active_sessions()
 
-        # Bug 3 (Hash Map Lookup): Build status lookup table and look up slot statuses
         status_map = build_slot_status_lookup(all_slots, active_sessions)
 
         enriched_slots = []
         for s in all_slots:
             slot_info = dict(s)
-            # Use hash map lookup to resolve status
             lookup = get_slot_status_from_map(status_map, s["slot_number"])
             slot_info["is_occupied"] = 1 if lookup.get("is_occupied") else 0
             slot_info["status"] = lookup.get("status", "available")
@@ -113,7 +111,6 @@ def get_slots():
         order = request.args.get("order", "asc")
 
         if sort_by == "slot_number":
-            # Bug 2 (Sorting Comparator): Sort using the comparator algorithm
             enriched_slots = sort_slots_by_identifier(enriched_slots, order=order)
         elif sort_by == "slot_type":
             reverse = (order.lower() == "desc")
@@ -154,7 +151,6 @@ def get_slot_detail(slot_number: str):
 def register_vehicle_entry():
     """
     Registers an arriving vehicle and allocates an available compatible slot.
-    Uses the First-Fit allocation algorithm (Bug 1).
     """
     try:
         data = request.get_json() or {}
@@ -190,7 +186,6 @@ def register_vehicle_entry():
                 "error": f"No compatible parking space available for vehicle type '{vehicle_type}'"
             }), 422
 
-        # Bug 1 (First-Fit Allocation): Chooses slot using find_first_fit_slot
         allocated_slot = find_first_fit_slot(available_slots, vehicle_type)
 
         if not allocated_slot:
@@ -258,7 +253,6 @@ def get_active_sessions_list():
 def get_sessions_history():
     """
     Returns parking history with optional search and time interval filtering.
-    Uses interval overlap filtering (Bug 4).
     """
     try:
         search = request.args.get("search", "").strip()
@@ -268,7 +262,6 @@ def get_sessions_history():
         history = get_parking_history(search=search if search else None)
 
         if start_time or end_time:
-            # Bug 4 (Interval Boundary Overlap): Filter sessions with boundary check
             history = filter_sessions_by_interval(history, start_time or None, end_time or None)
 
         return jsonify(history), 200
