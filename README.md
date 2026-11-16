@@ -1,49 +1,91 @@
 # ParkSmart — Smart Parking Management System
 
-ParkSmart is a real-time parking facility dashboard designed for monitoring parking bays, tracking active vehicles, and managing facility turnover. It gives operators an interactive visual map of all parking spaces, automated bay allocation for incoming vehicles, and detailed records of parking fees and history.
+## 1. Your Mission: Investigate & Fix the Bugs
 
-## 1. Application Overview
+You are a **Full-Stack Developer** working on ParkSmart, a real-time smart parking management platform designed to help facility operators monitor bay occupancy, allocate spaces for incoming vehicles, and track historical parking sessions. The QA team has identified four critical algorithmic defects affecting parking operations.
 
-### Core Functionality
+Your responsibility is to investigate the existing codebase, reproduce each issue, identify its root cause, and implement reliable fixes without disrupting existing functionality.
 
-- Real-Time Occupancy Dashboard: Monitor total capacity, available bays, occupied bays, and live facility occupancy percentages.
-- Visual Parking Map: View individual parking spaces categorized by vehicle compatibility (Compact, Standard, EV Charging, and Large).
-- Vehicle Entry & Allocation: Register arriving vehicles with license plate details and automatically assign a suitable available slot.
-- Search and Filtering: Find parking bays by slot identifier or license plate, filter by status or vehicle category, and sort bay order.
-- Vehicle Exit Processing: Release occupied parking bays upon vehicle departure, record timestamps, and calculate total parking fees.
-- Parking History Logs: Inspect historical parking sessions with start and end time filters to analyze facility usage.
+### BUG-01: Parking Allocation Skips First Available Space
 
-## 2. Debugging Challenge
+**Problem:** When registering an incoming vehicle, the automated allocation algorithm ignores the earliest available parking bay and assigns the vehicle to the second available space instead.
 
-The parking facility system has been deployed with several operational glitches affecting slot allocation, sorting order, space availability displays, and historical search results. Your goal is to identify each defect and restore correct behavior across all facility workflows.
+**How to identify it:** Open the dashboard and observe available slots in Section A (e.g., `A-1` and `A-2` are both unoccupied). Register an incoming vehicle (such as a compact car) and inspect the allocated bay confirmation. Notice that `A-2` is assigned while `A-1` was skipped.
 
-### Reported Issues & Tasks:
+**Your task:** Ensure the first-fit allocation algorithm evaluates parking spaces in order from the beginning (index 0) and allocates the very first compatible available bay without skipping.
 
-Issue 1: Parking Allocation Skips First Available Space
+<p align="center">
+  <img width="1200" height="800" alt="image" src="https://cdn.debuglab.online/Lab/Parksmart/uploads/bug-01.png" />
+</p>
 
-- User Symptom: When registering an incoming vehicle, the system ignores the earliest available space and assigns the vehicle to the second space instead.
-- Task: Ensure the allocation algorithm checks spaces in order from the beginning and assigns the first compatible available bay without skipping.
+### BUG-02: Parking Slot Order Jumbles Multi-Digit Numbers
 
-Issue 2: Parking Slot Order Jumbles Multi-Digit Numbers
+**Problem:** When sorting parking bays in ascending order, multi-digit slot identifiers such as `A-10`, `A-11`, and `A-12` appear ahead of single-digit slots like `A-2` and `A-3`.
 
-- User Symptom: When sorting parking bays in ascending order, multi-digit slots like A-10 and A-11 appear ahead of A-2 and A-3.
-- Task: Correct the sorting comparator so that parking spaces are arranged in natural numerical sequence.
+**How to identify it:** In the dashboard toolbar, select the sort dropdown and sort parking slots by identifier in ascending order. Observe the bay listing and notice that slots sort lexicographically (e.g., `A-1`, `A-10`, `A-11`, `A-12`, `A-2`, `A-3`) rather than naturally.
 
-Issue 3: Empty Parking Spaces Incorrectly Show as Occupied
+**Your task:** Update the sorting comparator logic so that parking spaces are arranged in natural numerical sequence (`A-1`, `A-2`, ..., `A-10`, `A-11`, `A-12`).
 
-- User Symptom: When one vehicle parks in Section A, other empty spaces in the same section mistakenly report as occupied.
-- Task: Fix the slot status lookup so that each parking bay resolves its own availability independently without inheriting the state of neighboring bays.
+<p align="center">
+  <img width="1200" height="800" alt="image" src="https://cdn.debuglab.online/Lab/Parksmart/uploads/bug-02.png" />
+</p>
 
-Issue 4: Parking History Filter Misses Boundary Records
+### BUG-03: Empty Parking Spaces Incorrectly Show as Occupied
 
-- User Symptom: Filtering parking history by start and end times excludes vehicles that entered or exited right on the selected boundary times.
-- Task: Update the time-range filtering logic so that sessions touching or overlapping the specified time boundaries are included in the search results.
+**Problem:** When a single vehicle parks in a section, other empty spaces in that same section mistakenly report as occupied.
 
-## 3. Expected Behavior After Fixing Bugs
+**How to identify it:** Park a vehicle in Section A. Next, inspect other empty spaces in Section A (e.g., `A-1` or `A-3`). Observe that vacant bays in Section A are falsely reported as occupied due to key collisions in the status lookup map.
 
-1. Registering an arriving vehicle assigns the first compatible space in the facility (for example, slot A-1 is allocated rather than skipped).
-2. Sorting parking bays by slot number arranges them in natural numerical order (A-1, A-2, A-3 through A-12).
-3. Parking a vehicle in one slot leaves all other unoccupied spaces in that section marked as available.
-4. Filtering parking history includes all sessions that touch or overlap the chosen time range, including boundary timestamps.
+**Your task:** Fix the status cache lookup key logic so that each parking bay maps to its full unique identifier, ensuring each bay resolves its availability independently without inheriting the state of neighboring bays.
 
-You can verify your fixes with the `pytest` command. Once all issues are resolved, the dashboard will accurately reflect live parking operations and all tests will pass.
+<p align="center">
+  <img width="1200" height="800" alt="image" src="https://cdn.debuglab.online/Lab/Parksmart/uploads/bug-03.png" />
+</p>
+
+### BUG-04: Parking History Filter Misses Boundary Records
+
+**Problem:** Filtering parking history by start and end times excludes vehicle sessions that entered or exited right on the selected boundary timestamps.
+
+**How to identify it:** Navigate to the Parking History tab, set the filter start time to `2026-10-24T09:00:00` and end time to `2026-10-24T12:00:00`, and click "Apply Range Filter". Observe that sessions touching the boundary exactly (such as `SES-104` which entered at `12:00:00`) are omitted from the results.
+
+**Your task:** Update the time-interval overlap detection to use inclusive closed boundaries (`<=` and `>=`) so that sessions touching or overlapping the specified time boundaries are included in the search results.
+
+<p align="center">
+  <img width="1200" height="800" alt="image" src="https://cdn.debuglab.online/Lab/Parksmart/uploads/bug-04.png" />
+</p>
+
+---
+
+## 2. Get Familiar With the Application
+
+ParkSmart is a lightweight, real-time parking facility management system that provides a unified dashboard for tracking bay availability, vehicle sessions, and parking analytics.
+
+**Core Features:**
+
+- **Real-Time Occupancy Dashboard:** Monitor total capacity, available bays, occupied bays, and live facility occupancy percentages.
+
+- **Visual Parking Map:** View individual parking spaces categorized by vehicle compatibility (Compact, Standard, EV Charging, and Large).
+
+- **Automated Vehicle Allocation:** Register incoming vehicles with license plate and vehicle type details to automatically assign a compatible bay using first-fit allocation.
+
+- **Bay Sorting & Filtering:** Sort bays by identifier and filter spaces by vehicle category or occupancy status.
+
+- **Vehicle Departure & Fee Processing:** Release occupied bays upon vehicle exit, record departure timestamps, and calculate parking fees based on duration.
+
+- **Parking History & Interval Search:** Inspect historical parking logs with customizable start and end time filters to analyze facility turnover.
+
+---
+
+## 3. Expected Behaviour After Fixing the Bugs
+
+Once all reported issues have been resolved, the application should behave as follows:
+
+1. **First-Fit Allocation:** Arriving vehicles are assigned the first compatible space in sequence (e.g., allocating `A-1` when available rather than skipping to `A-2`).
+
+2. **Natural Slot Ordering:** Sorting parking bays arranges slot numbers in natural numerical order (`A-1`, `A-2`, `A-3` through `A-12`), with multi-digit numbers correctly placed after single-digit numbers.
+
+3. **Independent Slot Status:** Parking a vehicle in one slot leaves all other unoccupied spaces in that section marked as available.
+
+4. **Inclusive History Filtering:** Filtering parking history by interval includes all sessions that touch or overlap the chosen time range, including exact boundary timestamps.
+
+All existing parking management functionality and test suites must pass successfully.
